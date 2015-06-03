@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Testing out agenda with socket io</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $("span").css("color", "green");
+     
+      function timer() {
+        count = count - 1;
+        $(".next").children().first().find("span").html(count + " secs");
+      }
+      var firstIntegerReg = /\d{0,9}/;
+      var count = $(".next").children().first().find("span").html().match(firstIntegerReg);
+      var counter;
+
+      var socket = io();
+      $('input:checkbox').change(function() {
+        var agendaItemId = $(this).val();
+        var check = $(this).attr('checked');
+        console.log("Change: " + agendaItemId + " to " + check);
+        if (check) {
+          socket.emit('checked new item', {agendaItemId: agendaItemId});
+        } else {
+          socket.emit('unchecked new item', {agendaItemId: agendaItemId});
+        }
+      });
+      socket.on('checked new item', function (data) {
+        $(":checkbox[value="+ data.agendaItemId + "]").prop("checked", true);
+        $(".done").append($("div[value=" + data.agendaItemId + "]"));
+        clearInterval(counter);
+        count = $(".next").children().first().find("span").html().match(firstIntegerReg);
+        counter = setInterval(timer, 1000);
+      });
+      socket.on('unchecked new item', function (data) {
+        $(":checkbox[value="+ data.agendaItemId + "]").prop("checked", false);
+        $(".next").append($("div[value=" + data.agendaItemId + "]"));
+      });
+      socket.on('start meeting', function (data) {
+        counter = setInterval(timer, 1000);
+      });
+      $("#start").click(function() {
+        socket.emit('start meeting', {});
+      });
+
+    });
+  </script>
+</head>
+<body>
+  <button id="start">Start Meeting</button>
+  <p>Next...</p>
+  <div class="next">
+    <div value="1"><input type="checkbox" value="1"/>
+      Talk about past launches
+      <span id="timer1">120 secs</span>
+    </div>
+    <div value="2"><input type="checkbox" value="2"/>
+      Figure out next weeks okr
+      <span id="timer2">60 secs</span>
+    </div>
+    <div value="3"><input type="checkbox" value="3"/>
+      Revenue update
+      <span id="timer3">240 secs</span>
+    </div>
+    <div value="4"><input type="checkbox" value="4"/>
+      Assign bugs
+      <span id="timer4">10 secs</span>
+    </div>
+    <div value="5"><input type="checkbox" value="5"/>
+      Go over peer evaluations
+      <span id="timer5">30 secs</span>
+    </div>
+    <div value="6"><input type="checkbox" value="6"/>
+      Code change stats
+      <span id="timer6">40 secs</span>
+    </div>
+    <div value="7"><input type="checkbox" value="7"/>
+      decide backend datastore
+      <span id="timer7">120 secs</span>
+    </div>
+    <div value="8"><input type="checkbox" value="8"/>
+      discuss code style
+      <span id="timer8">20 secs</span>
+    </div>
+  </div>
+  <p>Done</p>
+  <div class="done"></div>
+</body>
+</html>
